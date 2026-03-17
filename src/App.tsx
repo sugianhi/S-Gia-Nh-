@@ -96,7 +96,7 @@ export default function App() {
       const prompt = `Học sinh hỏi: "${text}". Hãy giải đáp ngắn gọn, súc tích, bám sát SGK.`;
       
       const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
@@ -116,7 +116,7 @@ export default function App() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
-        content: "Ôi không! Cỗ máy thời gian hết năng lượng mất rồi. Cậu thử lại nhé!",
+        content: `Ôi không! Cỗ máy thời gian hết năng lượng mất rồi. Lỗi: ${error instanceof Error ? error.message : String(error)}`,
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
