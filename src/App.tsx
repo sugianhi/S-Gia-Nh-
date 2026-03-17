@@ -95,7 +95,7 @@ export default function App() {
       // We use generateContent to simulate chat with system instructions easily
       const prompt = `Học sinh hỏi: "${text}". Hãy giải đáp ngắn gọn, súc tích, bám sát SGK.`;
       
-      const response = await ai.models.generateContent({
+      const responseStream = await ai.models.generateContentStream({
         model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
@@ -104,13 +104,31 @@ export default function App() {
         }
       });
 
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'ai',
-        content: response.text || "Xin lỗi cậu, cỗ máy thời gian của mình đang bị trục trặc một chút. Cậu hỏi lại sau nhé!",
-      };
+      let isFirstChunk = true;
+      const aiMessageId = (Date.now() + 1).toString();
 
-      setMessages((prev) => [...prev, aiMessage]);
+      for await (const chunk of responseStream) {
+        if (isFirstChunk) {
+          setIsLoading(false);
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: aiMessageId,
+              role: 'ai',
+              content: chunk.text || '',
+            },
+          ]);
+          isFirstChunk = false;
+        } else {
+          setMessages((prev) => 
+            prev.map((msg) => 
+              msg.id === aiMessageId 
+                ? { ...msg, content: msg.content + (chunk.text || '') } 
+                : msg
+            )
+          );
+        }
+      }
     } catch (error) {
       console.error("Error generating response:", error);
       const errorMessage: Message = {
